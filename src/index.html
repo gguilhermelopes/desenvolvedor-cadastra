@@ -23,6 +23,120 @@
         </a>
       </header>
     </div>
+
+    <main class="main">
+      <div class="main-header">
+        <h1>Blusas</h1>
+        <select class="order-select" name="order-select">
+          <option value="valor1" selected disabled>Ordenar por:</option>
+          <option value="valor1">Mais recentes</option>
+          <option value="valor2">Menor preço</option>
+          <option value="valor3">Maior preço</option>
+        </select>
+      </div>
+
+      <section class="main-section">
+        <div class="filters-wrapper">
+          <h2>Cores</h2>
+          <div class="colors-filter filter">
+            <div class="checkbox-option">
+              <input type="checkbox" name="amarelo" id="amarelo" />
+              <label for="amarelo">Amarelo</label>
+            </div>
+            <div class="checkbox-option">
+              <input type="checkbox" name="azul" id="azul" />
+              <label for="azul">Azul</label>
+            </div>
+            <div class="checkbox-option">
+              <input type="checkbox" name="branco" id="branco" />
+              <label for="branco">Branco</label>
+            </div>
+            <div class="checkbox-option">
+              <input type="checkbox" name="cinza" id="cinza" />
+              <label for="cinza">Cinza</label>
+            </div>
+            <div class="checkbox-option">
+              <input type="checkbox" name="laranja" id="laranja" />
+              <label for="laranja">Laranja</label>
+            </div>
+            <button class="color-expand-button">Ver todas as cores</button>
+          </div>
+
+          <h2>Tamanhos</h2>
+          <div class="sizes-filter">
+            <div class="size-option">
+              <input type="checkbox" name="p" id="p" />
+              <label for="p">P</label>
+            </div>
+            <div class="size-option">
+              <input type="checkbox" name="m" id="m" />
+              <label for="m">M</label>
+            </div>
+            <div class="size-option">
+              <input type="checkbox" name="g" id="g" />
+              <label for="g">G</label>
+            </div>
+            <div class="size-option">
+              <input type="checkbox" name="gg" id="gg" />
+              <label for="gg">GG</label>
+            </div>
+            <div class="size-option">
+              <input type="checkbox" name="u" id="u" />
+              <label for="u">U</label>
+            </div>
+            <div class="size-option">
+              <input type="checkbox" name="36" id="36" />
+              <label for="36">36</label>
+            </div>
+            <div class="size-option">
+              <input type="checkbox" name="38" id="38" />
+              <label for="38">38</label>
+            </div>
+            <div class="size-option">
+              <input type="checkbox" name="40" id="40" />
+              <label for="40">40</label>
+            </div>
+            <div class="size-option">
+              <input type="checkbox" name="42" id="42" />
+              <label for="42">42</label>
+            </div>
+            <div class="size-option">
+              <input type="checkbox" name="44" id="44" />
+              <label for="44">44</label>
+            </div>
+            <div class="size-option">
+              <input type="checkbox" name="46" id="46" />
+              <label for="46">46</label>
+            </div>
+          </div>
+
+          <div class="prices-filter filter">
+            <h2>Faixa de preço</h2>
+            <div class="checkbox-option">
+              <input type="checkbox" name="0-50" id="0-50" />
+              <label for="0-50">de R$0 até R$50</label>
+            </div>
+            <div class="checkbox-option">
+              <input type="checkbox" name="51-150" id="51-150" />
+              <label for="51-150">de R$51 até R$150</label>
+            </div>
+            <div class="checkbox-option">
+              <input type="checkbox" name="151-300" id="151-300" />
+              <label for="151-300">de R$151 até R$300</label>
+            </div>
+            <div class="checkbox-option">
+              <input type="checkbox" name="301-500" id="301-500" />
+              <label for="301-500">de R$301 até R$500</label>
+            </div>
+            <div class="checkbox-option">
+              <input type="checkbox" name="501-" id="501-" />
+              <label for="501-">a partir de R$500</label>
+            </div>
+          </div>
+        </div>
+        <div>Content</div>
+      </section>
+    </main>
   </body>
 
   <script src="bundle.js"></script>
