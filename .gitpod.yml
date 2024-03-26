@@ -4,7 +4,7 @@
 
 ports:
   - port: 3000
-    onOpen: open-browser
+    onOpen: ignore
   - port: 5000
     onOpen: ignore
 

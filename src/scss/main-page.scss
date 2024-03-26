@@ -1,5 +1,5 @@
 .main {
-  padding: 2.5rem 10.125rem;
+  padding: 2.5rem 8.125rem;
   .main-header {
     display: flex;
     align-items: center;
@@ -111,6 +111,68 @@
           display: none;
         }
       }
+    }
+    .content {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      column-gap: 4rem;
+      row-gap: 2.5rem;
+      margin: 0 auto;
+      padding: 0 6.125rem;
+
+      li {
+        text-align: center;
+        max-width: 195px;
+        h2 {
+          text-transform: uppercase;
+          margin-top: 0.625rem;
+          font-size: 0.875rem;
+        }
+        span {
+          display: block;
+        }
+        .price {
+          font-weight: 700;
+          margin-top: 0.875rem;
+        }
+        .payment {
+          color: var(--gray-2-color);
+        }
+        button {
+          width: 100%;
+          border-radius: 0;
+          border: 1px solid transparent;
+          background: var(--black-color);
+          color: #fff;
+          text-transform: uppercase;
+          font-weight: 700;
+          font-size: 0.875rem;
+          padding: 0.5rem 0;
+          margin-top: 0.875rem;
+          cursor: pointer;
+        }
+      }
+    }
+    .load-more-button {
+      grid-column: 2;
+      place-self: center;
+      margin-top: 2rem;
+      border-radius: 0;
+      border: 1px solid transparent;
+      background: var(--primary-color);
+      color: #fff;
+      text-transform: uppercase;
+      font-weight: 700;
+      font-size: 0.875rem;
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+    }
+    .fallback-message {
+      margin-top: 2rem;
+      grid-column: 2;
+      text-align: center;
+      font-weight: 700;
+      color: var(--gray-1-color);
     }
   }
 }
