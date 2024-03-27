@@ -1,16 +1,23 @@
 import { Product } from "./Product";
 
 const serverUrl = "http://localhost:5000";
+
 const contentSection = document.querySelector(".main-section") as HTMLElement;
 const loadMoreButton = document.createElement("button");
+
 let currentPage = 1;
-const productsPerPage = 9;
+let productsPerPage: number;
 const fallbackMessageText = "Não existem mais produtos.";
 
+const updateProductsPerPageByWindowSize = () =>
+  window.innerWidth < 870 ? (productsPerPage = 4) : (productsPerPage = 9);
+
 async function main() {
+  updateProductsPerPageByWindowSize();
   await fetchProducts(currentPage);
 }
 
+window.addEventListener("resize", updateProductsPerPageByWindowSize);
 document.addEventListener("DOMContentLoaded", main);
 
 const fetchProducts = async (page: number) => {
@@ -24,7 +31,7 @@ const fetchProducts = async (page: number) => {
   const productsToShow = data.slice(startIndex, endIndex);
 
   if (productsToShow.length === 0) {
-    showNoMoreProductsMessage(contentUl);
+    showNoMoreProductsMessage();
     return;
   }
 
@@ -59,13 +66,6 @@ const fetchProducts = async (page: number) => {
   currentPage++;
 };
 
-const formatPaymentPlan = (data: number[]): string => {
-  return `até ${data[0]}x de ${data[1].toLocaleString("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  })}`;
-};
-
 const loadMoreProducts = () => {
   fetchProducts(currentPage);
 };
@@ -75,10 +75,17 @@ loadMoreButton.classList.add("load-more-button");
 loadMoreButton.addEventListener("click", loadMoreProducts);
 contentSection.appendChild(loadMoreButton);
 
-const showNoMoreProductsMessage = (contentUl: HTMLElement) => {
+const showNoMoreProductsMessage = () => {
   const message = document.createElement("p");
   message.textContent = fallbackMessageText;
   message.classList.add("fallback-message");
   contentSection.appendChild(message);
   contentSection.removeChild(loadMoreButton);
+};
+
+const formatPaymentPlan = (data: number[]): string => {
+  return `até ${data[0]}x de ${data[1].toLocaleString("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  })}`;
 };
