@@ -71,6 +71,7 @@
           gap: 0.625rem;
           font-size: 0.875rem;
           cursor: pointer;
+          transition: 0.3s;
         }
 
         .checkbox-option input + label::before {
@@ -82,7 +83,7 @@
           transition: 0.3s;
         }
 
-        .checkbox-option input:checked + label:before {
+        .checkbox-option input:checked + label::before {
           background-color: var(--primary-color);
           width: 1rem;
           height: 1rem;
@@ -90,6 +91,10 @@
             -2.5px -2.5px 0px 0px rgba(255, 255, 255, 1) inset;
           border: 1px solid var(--gray-1-color);
           display: inline-block;
+        }
+
+        .checkbox-option input:hover + label {
+          color: var(--primary-color);
         }
       }
 
@@ -113,6 +118,10 @@
           cursor: pointer;
         }
         .size-option input:checked + label {
+          border-color: var(--primary-color);
+          color: var(--black-color);
+        }
+        .size-option input:hover + label {
           border-color: var(--primary-color);
           color: var(--black-color);
         }
@@ -163,6 +172,12 @@
           padding: 0.5rem 0;
           margin-top: 0.875rem;
           cursor: pointer;
+          transition: 0.3s;
+        }
+        button:hover {
+          background: #fff;
+          border-color: var(--black-color);
+          color: var(--black-color);
         }
       }
     }
@@ -179,6 +194,12 @@
       font-size: 0.875rem;
       padding: 0.5rem 1rem;
       cursor: pointer;
+      transition: 0.3s;
+    }
+    .load-more-button:hover {
+      background: #fff;
+      border-color: var(--primary-color);
+      color: var(--primary-color);
     }
     .fallback-message {
       margin-top: 2rem;
