@@ -3,11 +3,15 @@ import { Product } from "./Product";
 const serverUrl = "http://localhost:5000";
 
 const contentSection = document.querySelector(".main-section") as HTMLElement;
+const cartCounter = document.querySelector(".cart-counter");
+const headerContainer = document.querySelector(".header-container");
 const loadMoreButton = document.createElement("button");
+const fallbackMessageText = "Não existem mais produtos.";
 
 let currentPage = 1;
 let productsPerPage: number;
-const fallbackMessageText = "Não existem mais produtos.";
+let products: Product[] | null;
+let cartControlArray: Product[] | [] = [];
 
 const updateProductsPerPageByWindowSize = () =>
   window.innerWidth < 870 ? (productsPerPage = 4) : (productsPerPage = 9);
@@ -25,6 +29,7 @@ const fetchProducts = async (page: number) => {
 
   const response = await fetch(`${serverUrl}/products`);
   const data = (await response.json()) as Product[];
+  products = data;
 
   const startIndex = (page - 1) * productsPerPage;
   const endIndex = startIndex + productsPerPage;
@@ -53,6 +58,8 @@ const fetchProducts = async (page: number) => {
       currency: "BRL",
     });
     paymentSpan.textContent = formatPaymentPlan(item.parcelamento);
+    button.id = item.id;
+    button.classList.add("cart-add-button");
     button.textContent = "comprar";
 
     li.appendChild(img);
@@ -64,6 +71,8 @@ const fetchProducts = async (page: number) => {
     contentUl.appendChild(li);
   });
   currentPage++;
+  cartControl();
+  loadCartFromLocalStorage();
 };
 
 const loadMoreProducts = () => {
@@ -88,4 +97,61 @@ const formatPaymentPlan = (data: number[]): string => {
     style: "currency",
     currency: "BRL",
   })}`;
+};
+
+const cartControl = () => {
+  const cartButtons = document.querySelectorAll(".cart-add-button");
+
+  const handleAddToCartClick = (button: Element) => {
+    const productToAdd = products.filter(
+      (product) => product.id === button.id
+    )[0];
+    cartControlArray = [...cartControlArray, productToAdd];
+
+    updateCartCounter();
+
+    const cartNotificationContainer = document.createElement("div");
+    cartNotificationContainer.classList.add("cart-notification");
+    cartNotificationContainer.innerHTML = `<span>${productToAdd.name}</span> adicionado ao carrinho!`;
+    headerContainer.appendChild(cartNotificationContainer);
+
+    setTimeout(() => {
+      cartNotificationContainer.classList.add("notification-exit");
+    }, 3000);
+
+    cartNotificationContainer.addEventListener("animationend", (event) => {
+      event.animationName === "notification-exit" &&
+        headerContainer.removeChild(cartNotificationContainer);
+    });
+
+    saveCartToLocalStorage();
+  };
+
+  cartButtons.forEach((button) => {
+    button.removeEventListener("click", () => handleAddToCartClick(button));
+  });
+
+  cartButtons.forEach((button) => {
+    button.classList.remove("cart-add-button");
+    button.addEventListener("click", () => handleAddToCartClick(button));
+  });
+
+  const saveCartToLocalStorage = () => {
+    localStorage.setItem("cartItems", JSON.stringify(cartControlArray));
+  };
+};
+
+const updateCartCounter = () => {
+  if (cartControlArray.length !== 0) {
+    cartCounter.classList.remove("hidden");
+    cartCounter.textContent = cartControlArray.length.toString();
+  }
+};
+
+const loadCartFromLocalStorage = () => {
+  const savedCart = localStorage.getItem("cartItems");
+  if (savedCart) {
+    cartControlArray = JSON.parse(savedCart);
+    updateCartCounter();
+  }
 };
