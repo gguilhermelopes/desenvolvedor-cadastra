@@ -5,13 +5,16 @@ const serverUrl = "http://localhost:5000";
 const contentSection = document.querySelector(".main-section") as HTMLElement;
 const cartCounter = document.querySelector(".cart-counter");
 const headerContainer = document.querySelector(".header-container");
+const cartItemsContainer = document.querySelector(".cart-items");
+
 const loadMoreButton = document.createElement("button");
 const fallbackMessageText = "Não existem mais produtos.";
 
 let currentPage = 1;
 let productsPerPage: number;
 let products: Product[] | null;
-let cartControlArray: Product[] | [] = [];
+let cartItemIdCounter = 0;
+let cartControlArray: Product[] | null;
 
 const updateProductsPerPageByWindowSize = () =>
   window.innerWidth < 870 ? (productsPerPage = 4) : (productsPerPage = 9);
@@ -71,8 +74,8 @@ const fetchProducts = async (page: number) => {
     contentUl.appendChild(li);
   });
   currentPage++;
-  cartControl();
   loadCartFromLocalStorage();
+  cartControl();
 };
 
 const loadMoreProducts = () => {
@@ -101,50 +104,31 @@ const formatPaymentPlan = (data: number[]): string => {
 
 const cartControl = () => {
   const cartButtons = document.querySelectorAll(".cart-add-button");
-
-  const handleAddToCartClick = (button: Element) => {
-    const productToAdd = products.filter(
-      (product) => product.id === button.id
-    )[0];
-    cartControlArray = [...cartControlArray, productToAdd];
-
-    updateCartCounter();
-
-    const cartNotificationContainer = document.createElement("div");
-    cartNotificationContainer.classList.add("cart-notification");
-    cartNotificationContainer.innerHTML = `<span>${productToAdd.name}</span> adicionado ao carrinho!`;
-    headerContainer.appendChild(cartNotificationContainer);
-
-    setTimeout(() => {
-      cartNotificationContainer.classList.add("notification-exit");
-    }, 3000);
-
-    cartNotificationContainer.addEventListener("animationend", (event) => {
-      event.animationName === "notification-exit" &&
-        headerContainer.removeChild(cartNotificationContainer);
-    });
-
-    saveCartToLocalStorage();
-  };
+  const cartToggleStateButton = document.querySelector(".cart-link");
 
   cartButtons.forEach((button) => {
-    button.removeEventListener("click", () => handleAddToCartClick(button));
+    button.removeEventListener("click", handleAddToCartClick);
   });
 
   cartButtons.forEach((button) => {
-    button.classList.remove("cart-add-button");
-    button.addEventListener("click", () => handleAddToCartClick(button));
+    button.addEventListener("click", handleAddToCartClick);
   });
 
-  const saveCartToLocalStorage = () => {
-    localStorage.setItem("cartItems", JSON.stringify(cartControlArray));
+  const handleCartToggleStateClick = () => {
+    cartItemsContainer.classList.contains("active")
+      ? cartItemsContainer.classList.remove("active")
+      : cartItemsContainer.classList.add("active");
   };
+
+  cartToggleStateButton.addEventListener("click", handleCartToggleStateClick);
 };
 
-const updateCartCounter = () => {
+const handleCartCounter = (cartControlArray: Product[] | null) => {
   if (cartControlArray.length !== 0) {
     cartCounter.classList.remove("hidden");
     cartCounter.textContent = cartControlArray.length.toString();
+  } else {
+    cartCounter.classList.add("hidden");
   }
 };
 
@@ -152,6 +136,103 @@ const loadCartFromLocalStorage = () => {
   const savedCart = localStorage.getItem("cartItems");
   if (savedCart) {
     cartControlArray = JSON.parse(savedCart);
-    updateCartCounter();
+    handleCartItems(cartControlArray);
+    handleCartCounter(cartControlArray);
+  } else {
+    cartControlArray = [];
+    handleCartItems([]);
   }
+};
+
+const saveCartToLocalStorage = (cartControlArray: Product[] | null) => {
+  localStorage.setItem("cartItems", JSON.stringify(cartControlArray));
+};
+
+const handleAddToCartClick = (event: Event) => {
+  const target = event.target as HTMLElement;
+
+  const productToAdd = products.find((product) => product.id === target.id);
+  if (!productToAdd) return;
+
+  const uniqueCartItemId = `${productToAdd.id}-${
+    cartItemIdCounter++ * Math.random()
+  }`;
+
+  cartControlArray.push({ ...productToAdd, uniqueId: uniqueCartItemId });
+
+  handleCartCounter(cartControlArray);
+  handleCartItems(cartControlArray);
+  handleCartNotifications(productToAdd);
+  saveCartToLocalStorage(cartControlArray);
+};
+
+const handleCartItems = (cartControlArray: Product[] | null) => {
+  cartItemsContainer.innerHTML = "";
+
+  if (cartControlArray.length === 0 || cartControlArray === null) {
+    const cartItemContainer = document.createElement("div");
+    cartItemContainer.classList.add("cart-item");
+    cartItemContainer.textContent = "Não há produtos no carrinho.";
+    cartItemsContainer.appendChild(cartItemContainer);
+  }
+
+  cartControlArray.forEach((product) => {
+    const cartItemContainer = document.createElement("div");
+    const cartItemHeader = document.createElement("div");
+    const cartItemHeaderName = document.createElement("span");
+    const cartItemHeaderPrice = document.createElement("span");
+    const cartItemImg = document.createElement("img");
+    const cartItemRemoveButton = document.createElement("button");
+
+    cartItemContainer.classList.add("cart-item");
+    cartItemHeader.classList.add("cart-item-header");
+    cartItemRemoveButton.dataset.uniqueId = product.uniqueId;
+
+    cartItemHeaderName.textContent = product.name;
+    cartItemHeaderPrice.textContent = product.price.toLocaleString("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    });
+    cartItemImg.src = product.image;
+
+    cartItemsContainer.appendChild(cartItemContainer);
+    cartItemContainer.appendChild(cartItemHeader);
+    cartItemHeader.appendChild(cartItemHeaderName);
+    cartItemHeader.appendChild(cartItemHeaderPrice);
+    cartItemContainer.appendChild(cartItemImg);
+    cartItemContainer.appendChild(cartItemRemoveButton);
+
+    const handleRemoveButtonClick = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      const uniqueCartItemId = target.dataset.uniqueId;
+
+      cartControlArray = cartControlArray.filter(
+        (item) => item.uniqueId !== uniqueCartItemId
+      );
+      saveCartToLocalStorage(cartControlArray);
+
+      loadCartFromLocalStorage();
+
+      handleCartCounter(cartControlArray);
+      handleCartItems(cartControlArray);
+    };
+
+    cartItemRemoveButton.addEventListener("click", handleRemoveButtonClick);
+  });
+};
+
+const handleCartNotifications = (productToAdd: Product) => {
+  const cartNotificationContainer = document.createElement("div");
+  cartNotificationContainer.classList.add("cart-notification");
+  cartNotificationContainer.innerHTML = `<span>${productToAdd.name}</span> adicionado ao carrinho!`;
+  headerContainer.appendChild(cartNotificationContainer);
+
+  setTimeout(() => {
+    cartNotificationContainer.classList.add("notification-exit");
+  }, 3000);
+
+  cartNotificationContainer.addEventListener("animationend", (event) => {
+    event.animationName === "notification-exit" &&
+      headerContainer.removeChild(cartNotificationContainer);
+  });
 };

@@ -9,7 +9,10 @@
     color: #fff;
     font-size: 0.875rem;
     border-radius: 2px;
+    box-shadow: var(--primary-shadow);
     animation: notification-entry 0.3s forwards;
+    width: 40ch;
+    text-align: center;
     span {
       font-weight: 700;
     }
@@ -27,18 +30,58 @@
 
     .cart-items {
       position: absolute;
-      display: flex;
-      gap: 0.25rem;
+      display: none;
       flex-direction: column;
       right: 0;
       top: 3.25rem;
       margin-right: 8.125rem;
-      padding: 1.25rem;
+      padding: 0.5rem 1.5rem;
       background: #aaa;
+      color: #fff;
+      font-size: 0.875rem;
+      font-weight: 700;
+      box-shadow: var(--primary-shadow);
+      max-height: 25rem;
+      overflow-y: auto;
+
+      &.active {
+        display: flex;
+      }
+
+      .cart-item:not(:last-child) {
+        border-bottom: 1px solid #ccc;
+      }
+      .cart-item {
+        display: flex;
+        gap: 0.5rem;
+        padding: 1rem 0;
+        width: 15rem;
+        justify-content: space-between;
+
+        .cart-item-header {
+          display: flex;
+          flex-direction: column;
+          gap: 0.5rem;
+          justify-content: flex-end;
+        }
+        img {
+          width: 2.5rem;
+        }
+        button {
+          position: absolute;
+          background: url("../img/remove-cart-item.svg") center center no-repeat;
+          background-size: 0.75rem 0.75rem;
+          width: 0.75rem;
+          height: 0.75rem;
+          border: none;
+          cursor: pointer;
+        }
+      }
     }
 
     .cart-link {
       position: relative;
+      cursor: pointer;
       .cart-counter {
         position: absolute;
         right: -4px;
