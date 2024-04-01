@@ -209,6 +209,60 @@
       color: var(--gray-1-color);
     }
   }
+  .mobile-filter {
+    display: none;
+  }
+  .mobile-filter.active {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    min-height: 100vh;
+    width: 100%;
+    background: #fff;
+    animation: mobile-filter-entry 0.3s forwards;
+    .mobile-filter-header {
+      padding: 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      h2 {
+        font-size: 2rem;
+        text-transform: uppercase;
+        color: var(--gray-2-color);
+      }
+      button {
+        background: url("../img/remove-cart-item.svg") center center no-repeat;
+        background-size: 1.125rem 1.125rem;
+        width: 1.125rem;
+        height: 1.125rem;
+        border: none;
+        cursor: pointer;
+      }
+    }
+    &::after {
+      content: "";
+      position: absolute;
+      top: 4rem;
+      width: 100%;
+      height: 2px;
+      display: block;
+      background-color: #c7c7c7;
+    }
+
+    .mobile-filter-content {
+      display: flex;
+      flex-direction: column;
+      gap: 1.375rem;
+      padding: 2rem 1rem;
+      li {
+        font-size: 1.375rem;
+      }
+    }
+    &.mobile-filter-exit {
+      animation: mobile-filter-exit 0.3s forwards;
+    }
+  }
 }
 
 @media (max-width: 1200px) {
@@ -273,5 +327,27 @@
         row-gap: 1rem;
       }
     }
+  }
+}
+
+@keyframes mobile-filter-entry {
+  from {
+    transform: translateX(-2rem);
+    opacity: 0;
+  }
+  to {
+    transform: initial;
+    opacity: 1;
+  }
+}
+
+@keyframes mobile-filter-exit {
+  from {
+    transform: initial;
+    opacity: 1;
+  }
+  to {
+    transform: translateX(-2rem);
+    opacity: 0;
   }
 }

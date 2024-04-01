@@ -26,11 +26,25 @@
     </div>
 
     <main class="main">
+      <section class="mobile-filter order-filter">
+        <div class="mobile-filter-header">
+          <h2>Ordenar</h2>
+          <button
+            class="order-filter-close-button"
+            aria-label="Botão para fechar filtro"
+          ></button>
+        </div>
+        <ul class="mobile-filter-content">
+          <li>Mais recente</li>
+          <li>Maior preço</li>
+          <li>Menor preço</li>
+        </ul>
+      </section>
       <div class="main-header">
         <h1>Blusas</h1>
         <div class="mobile-buttons-container">
           <h2>Filtrar</h2>
-          <h2>Ordenar</h2>
+          <h2 class="mobile-button-order-filter">Ordenar</h2>
         </div>
         <select class="order-select" name="order-select">
           <option value="valor1" selected disabled>Ordenar por:</option>

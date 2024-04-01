@@ -22,6 +22,7 @@ const updateProductsPerPageByWindowSize = () =>
 async function main() {
   updateProductsPerPageByWindowSize();
   await fetchProducts(currentPage);
+  handleOrderFilter();
 }
 
 window.addEventListener("resize", updateProductsPerPageByWindowSize);
@@ -115,12 +116,24 @@ const cartControl = () => {
   });
 
   const handleCartToggleStateClick = () => {
-    cartItemsContainer.classList.contains("active")
-      ? cartItemsContainer.classList.remove("active")
-      : cartItemsContainer.classList.add("active");
+    if (cartItemsContainer.classList.contains("active")) {
+      cartItemsContainer.classList.add("cart-exit");
+    } else {
+      cartItemsContainer.classList.add("active");
+      cartItemsContainer.classList.remove("cart-exit");
+    }
+  };
+
+  const handleCartItemsContainerAnimationExit = (event: AnimationEvent) => {
+    event.animationName === "cart-exit" &&
+      cartItemsContainer.classList.remove("active");
   };
 
   cartToggleStateButton.addEventListener("click", handleCartToggleStateClick);
+  cartItemsContainer.addEventListener(
+    "animationend",
+    handleCartItemsContainerAnimationExit
+  );
 };
 
 const handleCartCounter = (cartControlArray: Product[] | null) => {
@@ -235,4 +248,43 @@ const handleCartNotifications = (productToAdd: Product) => {
     event.animationName === "notification-exit" &&
       headerContainer.removeChild(cartNotificationContainer);
   });
+};
+
+const handleOrderFilter = () => {
+  const orderFilterSection = document.querySelector(".order-filter");
+  const orderFilterOpenButton = document.querySelector(
+    ".mobile-button-order-filter"
+  );
+  const orderFilterCloseButton = document.querySelector(
+    ".order-filter-close-button"
+  );
+
+  const handleOrderFilterOpenButtonClick = () => {
+    orderFilterSection.classList.add("active");
+    orderFilterSection.classList.remove("mobile-filter-exit");
+  };
+
+  const handleOrderFilterCloseButtonClick = () => {
+    orderFilterSection.classList.add("mobile-filter-exit");
+  };
+
+  const handleOrderFilterAnimationEnd = (event: AnimationEvent) => {
+    event.animationName === "mobile-filter-exit" &&
+      orderFilterSection.classList.remove("active");
+  };
+
+  orderFilterOpenButton.addEventListener(
+    "click",
+    handleOrderFilterOpenButtonClick
+  );
+
+  orderFilterCloseButton.addEventListener(
+    "click",
+    handleOrderFilterCloseButtonClick
+  );
+
+  orderFilterSection.addEventListener(
+    "animationend",
+    handleOrderFilterAnimationEnd
+  );
 };

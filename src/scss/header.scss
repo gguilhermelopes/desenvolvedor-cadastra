@@ -46,6 +46,11 @@
 
       &.active {
         display: flex;
+        animation: cart-entry 0.3s forwards;
+      }
+
+      &.cart-exit {
+        animation: cart-exit 0.3s forwards;
       }
 
       .cart-item:not(:last-child) {
@@ -108,6 +113,9 @@
   .header-container {
     .header {
       padding: 1.125rem 4.075rem;
+      .cart-items {
+        margin-right: 4.075rem;
+      }
     }
   }
 }
@@ -116,6 +124,9 @@
   .header-container {
     .header {
       padding: 1.125rem 2rem;
+      .cart-items {
+        margin-right: 2rem;
+      }
     }
   }
 }
@@ -139,5 +150,27 @@
   to {
     opacity: 0;
     transform: translate(-50%, -1rem);
+  }
+}
+
+@keyframes cart-entry {
+  from {
+    transform: translateX(2rem);
+    opacity: 0;
+  }
+  to {
+    transform: initial;
+    opacity: 1;
+  }
+}
+
+@keyframes cart-exit {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(2rem);
+    opacity: 0;
   }
 }
