@@ -23,6 +23,7 @@ async function main() {
   updateProductsPerPageByWindowSize();
   await fetchProducts(currentPage);
   handleOrderFilter();
+  handleColorExpand();
 }
 
 window.addEventListener("resize", updateProductsPerPageByWindowSize);
@@ -287,4 +288,18 @@ const handleOrderFilter = () => {
     "animationend",
     handleOrderFilterAnimationEnd
   );
+};
+
+const handleColorExpand = () => {
+  const colorExpandButton = document.querySelector(".color-expand-button");
+  const colorCheckboxes = document.querySelectorAll(".color-checkbox");
+
+  const handleColorExpandButtonClick = () => {
+    colorCheckboxes.forEach((checkbox) => {
+      checkbox.classList.remove("hidden");
+    });
+    colorExpandButton.classList.add("hidden");
+  };
+
+  colorExpandButton.addEventListener("click", handleColorExpandButtonClick);
 };
