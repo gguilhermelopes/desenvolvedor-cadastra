@@ -6,13 +6,17 @@ const contentSection = document.querySelector(".main-section") as HTMLElement;
 const cartCounter = document.querySelector(".cart-counter");
 const headerContainer = document.querySelector(".header-container");
 const cartItemsContainer = document.querySelector(".cart-items");
+const cartToggleStateButton = document.querySelector(".cart-link");
 
 const loadMoreButton = document.createElement("button");
+loadMoreButton.classList.add("load-more-button");
+loadMoreButton.textContent = "Carregar Mais";
 const fallbackMessageText = "Não existem mais produtos.";
+const noProductsText = "Nenhum produto encontrado para os filtros.";
 
 let currentPage = 1;
 let productsPerPage: number;
-let products: Product[] | null;
+let products: Product[] | null = [];
 let cartItemIdCounter = 0;
 let cartControlArray: Product[] | null;
 
@@ -24,26 +28,35 @@ async function main() {
   await fetchProducts(currentPage);
   handleOrderFilter();
   handleColorExpand();
+  handleProductFilters();
+  adjustLoadMoreButtonVisibility();
 }
 
 window.addEventListener("resize", updateProductsPerPageByWindowSize);
 document.addEventListener("DOMContentLoaded", main);
 
-const fetchProducts = async (page: number) => {
+contentSection.appendChild(loadMoreButton);
+
+const fetchProducts = async (page: number, filteredProducts?: Product[]) => {
   const contentUl = document.querySelector(".content") as HTMLElement;
+  const fallbackMessage = document.querySelector(".fallback-message");
 
-  const response = await fetch(`${serverUrl}/products`);
-  const data = (await response.json()) as Product[];
-  products = data;
+  if (fallbackMessage) {
+    contentSection.removeChild(fallbackMessage);
+  }
 
-  const startIndex = (page - 1) * productsPerPage;
-  const endIndex = startIndex + productsPerPage;
-  const productsToShow = data.slice(startIndex, endIndex);
+  const productsToShow = filteredProducts
+    ? filteredProducts
+    : await fetchAndFilterProducts(page);
 
-  if (productsToShow.length === 0) {
+  if (filteredProducts) contentUl.innerHTML = "";
+
+  if (productsToShow.length === 0 && !filteredProducts) {
     showNoMoreProductsMessage();
     return;
   }
+
+  products = [...products, ...productsToShow];
 
   productsToShow.forEach((item) => {
     const li = document.createElement("li");
@@ -77,17 +90,63 @@ const fetchProducts = async (page: number) => {
   });
   currentPage++;
   loadCartFromLocalStorage();
-  cartControl();
+  cartControl(products);
 };
 
-const loadMoreProducts = () => {
-  fetchProducts(currentPage);
+const fetchFilteredProducts = async (
+  page: number,
+  activeFilters?: string[]
+) => {
+  const filteredProducts = await fetchAndFilterProducts(page, activeFilters);
+
+  if (filteredProducts.length === 0) {
+    showNoProductsFoundMessage();
+    contentSection.contains(loadMoreButton) &&
+      contentSection.removeChild(loadMoreButton);
+  }
+  await fetchProducts(page, filteredProducts);
 };
 
-loadMoreButton.textContent = "Carregar Mais";
-loadMoreButton.classList.add("load-more-button");
+const showNoProductsFoundMessage = () => {
+  const message = document.createElement("div");
+  message.textContent = noProductsText;
+  message.classList.add("no-products-found-message");
+  contentSection.appendChild(message);
+};
+
+const fetchAndFilterProducts = async (
+  page: number,
+  activeFilters?: string[]
+) => {
+  const response = await fetch(`${serverUrl}/products`);
+  let productsToShow = (await response.json()) as Product[];
+
+  if (activeFilters) {
+    productsToShow = filterProducts(productsToShow, activeFilters);
+  }
+
+  const startIndex = (page - 1) * productsPerPage;
+  const endIndex = startIndex + productsPerPage;
+
+  return activeFilters
+    ? productsToShow
+    : productsToShow.slice(startIndex, endIndex);
+};
+
+const loadMoreProducts = async () => {
+  const filterCheckboxes = document.querySelectorAll<HTMLInputElement>(
+    "input[type=checkbox]"
+  );
+  const activeFilters = Array.from(filterCheckboxes)
+    .filter((c) => c.checked)
+    .map((c) => c.id);
+
+  if (!activeFilters.length) {
+    await fetchProducts(currentPage);
+  }
+};
+
 loadMoreButton.addEventListener("click", loadMoreProducts);
-contentSection.appendChild(loadMoreButton);
 
 const showNoMoreProductsMessage = () => {
   const message = document.createElement("p");
@@ -104,9 +163,9 @@ const formatPaymentPlan = (data: number[]): string => {
   })}`;
 };
 
-const cartControl = () => {
+const cartControl = (productsToShow: Product[]) => {
   const cartButtons = document.querySelectorAll(".cart-add-button");
-  const cartToggleStateButton = document.querySelector(".cart-link");
+  products = productsToShow;
 
   cartButtons.forEach((button) => {
     button.removeEventListener("click", handleAddToCartClick);
@@ -126,11 +185,24 @@ const cartControl = () => {
   };
 
   const handleCartItemsContainerAnimationExit = (event: AnimationEvent) => {
-    event.animationName === "cart-exit" &&
+    if (event.animationName === "cart-exit") {
       cartItemsContainer.classList.remove("active");
+      cartItemsContainer.classList.remove("cart-exit");
+    }
   };
 
-  cartToggleStateButton.addEventListener("click", handleCartToggleStateClick);
+  cartToggleStateButton.removeEventListener(
+    "click",
+    handleCartToggleStateClick
+  );
+  if (!cartToggleStateButton.hasAttribute("data-listener-added")) {
+    cartToggleStateButton.addEventListener("click", handleCartToggleStateClick);
+    cartToggleStateButton.setAttribute("data-listener-added", "true");
+  }
+  cartItemsContainer.removeEventListener(
+    "animationend",
+    handleCartItemsContainerAnimationExit
+  );
   cartItemsContainer.addEventListener(
     "animationend",
     handleCartItemsContainerAnimationExit
@@ -302,4 +374,76 @@ const handleColorExpand = () => {
   };
 
   colorExpandButton.addEventListener("click", handleColorExpandButtonClick);
+};
+
+const filterProducts = (products: Product[], activeCheckboxes: string[]) => {
+  return products.filter((product) => {
+    return activeCheckboxes.some((filter) => {
+      if (filter.startsWith("color-")) {
+        return product.color.toLowerCase() === filter.slice(6);
+      } else if (filter.startsWith("size-")) {
+        return product.size.includes(filter.slice(5));
+      } else if (filter.startsWith("price-")) {
+        const [min, max] = filter.slice(6).split("-");
+        return product.price >= +min && (+max ? product.price <= +max : true);
+      }
+      return false;
+    });
+  });
+};
+
+const handleProductFilters = () => {
+  const filterCheckboxes = document.querySelectorAll<HTMLInputElement>(
+    "input[type=checkbox]"
+  );
+  const handleFilterCheckboxesChange = async () => {
+    removeNoProductsFoundMessage();
+    currentPage = 1;
+    const areFiltersUnchecked = Array.from(filterCheckboxes).every(
+      (checkbox) => !checkbox.checked
+    );
+
+    if (!areFiltersUnchecked) {
+      const activeFilters = Array.from(filterCheckboxes)
+        .filter((c) => c.checked)
+        .map((c) => c.id);
+
+      await fetchFilteredProducts(currentPage, activeFilters);
+    } else {
+      await fetchFilteredProducts(currentPage);
+    }
+    adjustLoadMoreButtonVisibility();
+  };
+
+  filterCheckboxes.forEach((checkbox) =>
+    checkbox.addEventListener("change", handleFilterCheckboxesChange)
+  );
+};
+
+const adjustLoadMoreButtonVisibility = () => {
+  const filterCheckboxes = document.querySelectorAll<HTMLInputElement>(
+    "input[type=checkbox]"
+  );
+  const activeFilters = Array.from(filterCheckboxes)
+    .filter((checkbox) => checkbox.checked)
+    .map((checkbox) => checkbox.id);
+
+  if (activeFilters.length > 0) {
+    if (contentSection.contains(loadMoreButton)) {
+      contentSection.removeChild(loadMoreButton);
+    }
+  } else {
+    if (!contentSection.contains(loadMoreButton)) {
+      contentSection.appendChild(loadMoreButton);
+    }
+  }
+};
+
+const removeNoProductsFoundMessage = () => {
+  const noProductsFoundMessage = document.querySelector(
+    ".no-products-found-message"
+  );
+  if (noProductsFoundMessage) {
+    contentSection.removeChild(noProductsFoundMessage);
+  }
 };

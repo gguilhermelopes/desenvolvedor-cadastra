@@ -38,6 +38,15 @@
     grid-template-columns: 160px auto;
     gap: 2.75rem;
 
+    .no-products-found-message {
+      grid-column: 2;
+      grid-row: 1;
+      align-self: center;
+      text-align: center;
+      font-weight: 700;
+      color: var(--gray-1-color);
+    }
+
     .filters-wrapper {
       h2 {
         text-transform: uppercase;
