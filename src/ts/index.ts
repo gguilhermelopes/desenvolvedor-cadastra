@@ -1,44 +1,52 @@
 import { Product } from "./Product";
 
 const serverUrl = "http://localhost:5000";
-
 const contentSection = document.querySelector(".main-section") as HTMLElement;
 const cartCounter = document.querySelector(".cart-counter");
 const headerContainer = document.querySelector(".header-container");
 const cartItemsContainer = document.querySelector(".cart-items");
 const cartToggleStateButton = document.querySelector(".cart-link");
 
-const loadMoreButton = document.createElement("button");
-loadMoreButton.classList.add("load-more-button");
-loadMoreButton.textContent = "Carregar Mais";
-const fallbackMessageText = "Não existem mais produtos.";
-const noProductsText = "Nenhum produto encontrado para os filtros.";
-
 let currentPage = 1;
 let productsPerPage: number;
 let products: Product[] | null = [];
 let cartItemIdCounter = 0;
 let cartControlArray: Product[] | null;
+let lastSelectedOrder = "";
 
-const updateProductsPerPageByWindowSize = () =>
+const createButton = (text: string, className: string) => {
+  const button = document.createElement("button");
+  button.classList.add(className);
+  button.textContent = text;
+  return button;
+};
+
+const loadMoreButton = createButton("Carregar Mais", "load-more-button");
+const fallbackMessageText = "Não existem mais produtos.";
+const noProductsText = "Nenhum produto encontrado para os filtros.";
+
+contentSection.appendChild(loadMoreButton);
+
+const updateProductsPerPageByWindowSize = () => {
   window.innerWidth < 870 ? (productsPerPage = 4) : (productsPerPage = 9);
+};
 
 async function main() {
   updateProductsPerPageByWindowSize();
-  await fetchProducts(currentPage);
+  await renderProducts(currentPage);
   handleMobileOrderFilter();
   handleMobileMainFilter();
   handleColorExpand();
   handleProductFilters();
+  handleOrderFilterDropdown();
+  handleOrderFilter();
   adjustLoadMoreButtonVisibility();
 }
 
 window.addEventListener("resize", updateProductsPerPageByWindowSize);
 document.addEventListener("DOMContentLoaded", main);
 
-contentSection.appendChild(loadMoreButton);
-
-const fetchProducts = async (page: number, filteredProducts?: Product[]) => {
+const renderProducts = async (page: number, filteredProducts?: Product[]) => {
   const contentUl = document.querySelector(".content") as HTMLElement;
   const fallbackMessage = document.querySelector(".fallback-message");
 
@@ -57,47 +65,30 @@ const fetchProducts = async (page: number, filteredProducts?: Product[]) => {
     return;
   }
 
-  products = [...products, ...productsToShow];
+  products = productsToShow;
 
-  productsToShow.forEach((item) => {
-    const li = document.createElement("li");
-    const img = document.createElement("img");
-    const h2 = document.createElement("h2");
-    const priceSpan = document.createElement("span");
-    const paymentSpan = document.createElement("span");
-    const button = document.createElement("button");
-
-    priceSpan.classList.add("price");
-    paymentSpan.classList.add("payment");
-
-    img.src = item.image;
-    h2.textContent = item.name;
-    priceSpan.textContent = item.price.toLocaleString("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    });
-    paymentSpan.textContent = formatPaymentPlan(item.parcelamento);
-    button.id = item.id;
-    button.classList.add("cart-add-button");
-    button.textContent = "comprar";
-
-    li.appendChild(img);
-    li.appendChild(h2);
-    li.appendChild(priceSpan);
-    li.appendChild(paymentSpan);
-    li.appendChild(button);
-
-    contentUl.appendChild(li);
-  });
+  contentUl.innerHTML += productsToShow.map(createProductListItem).join("");
   currentPage++;
   loadCartFromLocalStorage();
   cartControl(products);
 };
 
-const fetchFilteredProducts = async (
-  page: number,
-  activeFilters?: string[]
-) => {
+const createProductListItem = (item: Product) => {
+  return `
+    <li>
+      <img src="${item.image}" />
+      <h2>${item.name}</h2>
+      <span class="price">${item.price.toLocaleString("pt-BR", {
+        style: "currency",
+        currency: "BRL",
+      })}</span>
+      <span class="payment">${formatPaymentPlan(item.parcelamento)}</span>
+      <button id="${item.id}" class="cart-add-button">comprar</button>
+    </li>
+ `;
+};
+
+const fetchProducts = async (page: number, activeFilters?: string[]) => {
   const filteredProducts = await fetchAndFilterProducts(page, activeFilters);
 
   if (filteredProducts.length === 0) {
@@ -105,7 +96,36 @@ const fetchFilteredProducts = async (
     contentSection.contains(loadMoreButton) &&
       contentSection.removeChild(loadMoreButton);
   }
-  await fetchProducts(page, filteredProducts);
+  await renderProducts(page, filteredProducts);
+};
+
+const fetchAndFilterProducts = async (
+  page: number,
+  activeFilters?: string[],
+  orderOption?: string
+) => {
+  let productsToShow;
+  try {
+    const response = await fetch(`${serverUrl}/products`);
+    productsToShow = (await response.json()) as Product[];
+  } catch (error) {
+    console.error(error);
+  }
+
+  if (activeFilters) {
+    productsToShow = filterProducts(productsToShow, activeFilters);
+  }
+
+  if (orderOption) {
+    productsToShow = sortProducts(orderOption, productsToShow);
+  }
+
+  const startIndex = (page - 1) * productsPerPage;
+  const endIndex = startIndex + productsPerPage;
+
+  return activeFilters || orderOption
+    ? productsToShow
+    : productsToShow.slice(startIndex, endIndex);
 };
 
 const showNoProductsFoundMessage = () => {
@@ -113,25 +133,6 @@ const showNoProductsFoundMessage = () => {
   message.textContent = noProductsText;
   message.classList.add("no-products-found-message");
   contentSection.appendChild(message);
-};
-
-const fetchAndFilterProducts = async (
-  page: number,
-  activeFilters?: string[]
-) => {
-  const response = await fetch(`${serverUrl}/products`);
-  let productsToShow = (await response.json()) as Product[];
-
-  if (activeFilters) {
-    productsToShow = filterProducts(productsToShow, activeFilters);
-  }
-
-  const startIndex = (page - 1) * productsPerPage;
-  const endIndex = startIndex + productsPerPage;
-
-  return activeFilters
-    ? productsToShow
-    : productsToShow.slice(startIndex, endIndex);
 };
 
 const loadMoreProducts = async () => {
@@ -143,7 +144,7 @@ const loadMoreProducts = async () => {
     .map((c) => c.id);
 
   if (!activeFilters.length) {
-    await fetchProducts(currentPage);
+    await renderProducts(currentPage);
   }
 };
 
@@ -256,55 +257,49 @@ const handleAddToCartClick = (event: Event) => {
 const handleCartItems = (cartControlArray: Product[] | null) => {
   cartItemsContainer.innerHTML = "";
 
-  if (cartControlArray.length === 0 || cartControlArray === null) {
-    const cartItemContainer = document.createElement("div");
-    cartItemContainer.classList.add("cart-item");
-    cartItemContainer.textContent = "Não há produtos no carrinho.";
-    cartItemsContainer.appendChild(cartItemContainer);
+  if (!cartControlArray || cartControlArray.length === 0) {
+    cartItemsContainer.innerHTML =
+      '<div class="cart-item">Não há produtos no carrinho.</div>';
+    return;
   }
 
   cartControlArray.forEach((product) => {
-    const cartItemContainer = document.createElement("div");
-    const cartItemHeader = document.createElement("div");
-    const cartItemHeaderName = document.createElement("span");
-    const cartItemHeaderPrice = document.createElement("span");
-    const cartItemImg = document.createElement("img");
-    const cartItemRemoveButton = document.createElement("button");
-
-    cartItemContainer.classList.add("cart-item");
-    cartItemHeader.classList.add("cart-item-header");
-    cartItemRemoveButton.dataset.uniqueId = product.uniqueId;
-
-    cartItemHeaderName.textContent = product.name;
-    cartItemHeaderPrice.textContent = product.price.toLocaleString("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    });
-    cartItemImg.src = product.image;
-
-    cartItemsContainer.appendChild(cartItemContainer);
-    cartItemContainer.appendChild(cartItemHeader);
-    cartItemHeader.appendChild(cartItemHeaderName);
-    cartItemHeader.appendChild(cartItemHeaderPrice);
-    cartItemContainer.appendChild(cartItemImg);
-    cartItemContainer.appendChild(cartItemRemoveButton);
-
-    const handleRemoveButtonClick = (event: MouseEvent) => {
-      const target = event.target as HTMLElement;
-      const uniqueCartItemId = target.dataset.uniqueId;
-
-      cartControlArray = cartControlArray.filter(
-        (item) => item.uniqueId !== uniqueCartItemId
-      );
-      saveCartToLocalStorage(cartControlArray);
-
-      loadCartFromLocalStorage();
-
-      handleCartCounter(cartControlArray);
-      handleCartItems(cartControlArray);
+    const createCartItem = (product: Product) => {
+      return `
+    <div class="cart-item">
+      <div class="cart-item-header">
+        <span>${product.name}</span>
+        <span>${product.price.toLocaleString("pt-BR", {
+          style: "currency",
+          currency: "BRL",
+        })}</span>
+      </div>
+      <img src="${product.image}" />
+      <button class="cart-item-remove-button" data-unique-id="${
+        product.uniqueId
+      }"></button>
+    </div>
+ `;
     };
+    cartItemsContainer.innerHTML += createCartItem(product);
+  });
 
-    cartItemRemoveButton.addEventListener("click", handleRemoveButtonClick);
+  const handleRemoveButtonClick = (event: MouseEvent) => {
+    const target = event.target as HTMLElement;
+    const uniqueCartItemId = target.dataset.uniqueId;
+
+    cartControlArray = cartControlArray.filter(
+      (item) => item.uniqueId !== uniqueCartItemId
+    );
+    saveCartToLocalStorage(cartControlArray);
+
+    loadCartFromLocalStorage();
+    handleCartCounter(cartControlArray);
+    handleCartItems(cartControlArray);
+  };
+
+  document.querySelectorAll(".cart-item-remove-button").forEach((button) => {
+    button.addEventListener("click", handleRemoveButtonClick);
   });
 };
 
@@ -371,10 +366,21 @@ const handleProductFilters = () => {
       const activeFilters = Array.from(filterCheckboxes)
         .filter((c) => c.checked)
         .map((c) => c.id);
-
-      await fetchFilteredProducts(currentPage, activeFilters);
+      const filteredProducts = await fetchAndFilterProducts(
+        currentPage,
+        activeFilters,
+        lastSelectedOrder
+      );
+      await renderProducts(currentPage, filteredProducts);
     } else {
-      await fetchFilteredProducts(currentPage);
+      if (lastSelectedOrder) {
+        const response = await fetch(`${serverUrl}/products`);
+        let productsToShow = (await response.json()) as Product[];
+        productsToShow = sortProducts(lastSelectedOrder, productsToShow);
+        await renderProducts(currentPage, productsToShow);
+      } else {
+        await renderProducts(currentPage);
+      }
     }
     adjustLoadMoreButtonVisibility();
   };
@@ -392,7 +398,14 @@ const adjustLoadMoreButtonVisibility = () => {
     .filter((checkbox) => checkbox.checked)
     .map((checkbox) => checkbox.id);
 
-  if (activeFilters.length > 0) {
+  const orderFilterToggleButton = document.querySelector(
+    ".order-filter-wrapper > span"
+  );
+
+  if (
+    activeFilters.length > 0 ||
+    orderFilterToggleButton.textContent !== "Ordenar por:  "
+  ) {
     if (contentSection.contains(loadMoreButton)) {
       contentSection.removeChild(loadMoreButton);
     }
@@ -575,8 +588,8 @@ const handleMobileFiltering = () => {
 
     if (activeFilters.length === 0) {
       contentUl.innerHTML = "";
-      await fetchProducts(currentPage);
-    } else await fetchFilteredProducts(currentPage, activeFilters);
+      await renderProducts(currentPage);
+    } else await fetchProducts(currentPage, activeFilters);
 
     adjustLoadMoreButtonVisibility();
     mainFilterSection.classList.add("mobile-filter-exit");
@@ -584,4 +597,87 @@ const handleMobileFiltering = () => {
 
   applyFilterButton.addEventListener("click", handleApplyFilterButtonClick);
   clearFilterButton.addEventListener("click", handleClearFilterButtonClick);
+};
+
+const handleOrderFilterDropdown = () => {
+  const orderFilterToggleButton = document.querySelector(
+    ".order-filter-wrapper > span"
+  );
+  const orderFilterWrapper = document.querySelector(
+    ".order-filter-buttons-wrapper"
+  );
+
+  const handleOrderFilterToggleButtonClick = () => {
+    orderFilterWrapper.classList.toggle("active");
+  };
+
+  orderFilterToggleButton.addEventListener(
+    "click",
+    handleOrderFilterToggleButtonClick
+  );
+
+  const orderFilterButtons = document.querySelectorAll(
+    ".order-filter-buttons-wrapper span"
+  );
+  orderFilterButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      const orderText = button.textContent;
+      orderFilterToggleButton.innerHTML = `${orderText} <img src="./img/filter-more.svg" /> `;
+
+      orderFilterWrapper.classList.remove("active");
+    });
+  });
+};
+
+const handleOrderFilter = async () => {
+  const orderFilterButtons = document.querySelectorAll(
+    ".order-filter-buttons-wrapper span"
+  );
+  let productsToShow: Product[] | [] = [];
+
+  orderFilterButtons.forEach((button) => {
+    button.addEventListener("click", async () => {
+      adjustLoadMoreButtonVisibility();
+
+      const orderOption = button.textContent;
+      lastSelectedOrder = orderOption;
+      const filterCheckboxes = document.querySelectorAll<HTMLInputElement>(
+        ".filters-wrapper input[type=checkbox]"
+      );
+      const areFiltersUnchecked = Array.from(filterCheckboxes).every(
+        (checkbox) => !checkbox.checked
+      );
+
+      if (areFiltersUnchecked) {
+        const response = await fetch(`${serverUrl}/products`);
+        productsToShow = (await response.json()) as Product[];
+      } else {
+        productsToShow = products;
+      }
+      const sortedProducts = sortProducts(orderOption, productsToShow);
+
+      const contentUl = document.querySelector(".content") as HTMLElement;
+      contentUl.innerHTML = "";
+
+      contentUl.innerHTML = sortedProducts.map(createProductListItem).join("");
+
+      loadCartFromLocalStorage();
+      cartControl(sortedProducts);
+    });
+  });
+};
+
+const sortProducts = (orderOption: string, filteredProducts: Product[]) => {
+  switch (orderOption) {
+    case "Mais recentes":
+      return [...filteredProducts].sort(
+        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+      );
+    case "Menor preço":
+      return [...filteredProducts].sort((a, b) => a.price - b.price);
+    case "Maior preço":
+      return [...filteredProducts].sort((a, b) => b.price - a.price);
+    default:
+      return filteredProducts;
+  }
 };

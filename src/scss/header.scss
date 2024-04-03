@@ -43,6 +43,7 @@
       box-shadow: var(--primary-shadow);
       max-height: 25rem;
       overflow-y: auto;
+      z-index: 2;
 
       &.active {
         display: flex;
@@ -91,7 +92,7 @@
         position: absolute;
         right: -4px;
         bottom: -1px;
-        z-index: 10;
+        z-index: 2;
         padding: 1.5px 3px;
         border-radius: 50%;
         color: #fff;
