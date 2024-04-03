@@ -94,7 +94,7 @@ function optimizeImages() {
       imagemin({
         interlaced: true,
         progressive: true,
-        optimizationLevel: 2, // Nível de otimização (0 a 7)
+        optimizationLevel: 2,
       })
     )
     .pipe(dest(paths.dest + "/img"));
