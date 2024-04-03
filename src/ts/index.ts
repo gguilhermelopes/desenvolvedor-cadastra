@@ -26,7 +26,8 @@ const updateProductsPerPageByWindowSize = () =>
 async function main() {
   updateProductsPerPageByWindowSize();
   await fetchProducts(currentPage);
-  handleOrderFilter();
+  handleMobileOrderFilter();
+  handleMobileMainFilter();
   handleColorExpand();
   handleProductFilters();
   adjustLoadMoreButtonVisibility();
@@ -323,45 +324,6 @@ const handleCartNotifications = (productToAdd: Product) => {
   });
 };
 
-const handleOrderFilter = () => {
-  const orderFilterSection = document.querySelector(".order-filter");
-  const orderFilterOpenButton = document.querySelector(
-    ".mobile-button-order-filter"
-  );
-  const orderFilterCloseButton = document.querySelector(
-    ".order-filter-close-button"
-  );
-
-  const handleOrderFilterOpenButtonClick = () => {
-    orderFilterSection.classList.add("active");
-    orderFilterSection.classList.remove("mobile-filter-exit");
-  };
-
-  const handleOrderFilterCloseButtonClick = () => {
-    orderFilterSection.classList.add("mobile-filter-exit");
-  };
-
-  const handleOrderFilterAnimationEnd = (event: AnimationEvent) => {
-    event.animationName === "mobile-filter-exit" &&
-      orderFilterSection.classList.remove("active");
-  };
-
-  orderFilterOpenButton.addEventListener(
-    "click",
-    handleOrderFilterOpenButtonClick
-  );
-
-  orderFilterCloseButton.addEventListener(
-    "click",
-    handleOrderFilterCloseButtonClick
-  );
-
-  orderFilterSection.addEventListener(
-    "animationend",
-    handleOrderFilterAnimationEnd
-  );
-};
-
 const handleColorExpand = () => {
   const colorExpandButton = document.querySelector(".color-expand-button");
   const colorCheckboxes = document.querySelectorAll(".color-checkbox");
@@ -378,7 +340,8 @@ const handleColorExpand = () => {
 
 const filterProducts = (products: Product[], activeCheckboxes: string[]) => {
   return products.filter((product) => {
-    return activeCheckboxes.some((filter) => {
+    return activeCheckboxes.some((checkbox) => {
+      const filter = checkbox.replace(/-mobile$/, "");
       if (filter.startsWith("color-")) {
         return product.color.toLowerCase() === filter.slice(6);
       } else if (filter.startsWith("size-")) {
@@ -394,8 +357,9 @@ const filterProducts = (products: Product[], activeCheckboxes: string[]) => {
 
 const handleProductFilters = () => {
   const filterCheckboxes = document.querySelectorAll<HTMLInputElement>(
-    "input[type=checkbox]"
+    ".filters-wrapper input[type=checkbox]"
   );
+
   const handleFilterCheckboxesChange = async () => {
     removeNoProductsFoundMessage();
     currentPage = 1;
@@ -446,4 +410,178 @@ const removeNoProductsFoundMessage = () => {
   if (noProductsFoundMessage) {
     contentSection.removeChild(noProductsFoundMessage);
   }
+};
+
+const handleMobileOrderFilter = () => {
+  const orderFilterSection = document.querySelector(".order-filter");
+  const orderFilterOpenButton = document.querySelector(
+    ".mobile-button-order-filter"
+  );
+  const orderFilterCloseButton = document.querySelector(
+    ".order-filter-close-button"
+  );
+
+  const handleOrderFilterOpenButtonClick = () => {
+    orderFilterSection.classList.add("active");
+    orderFilterSection.classList.remove("mobile-filter-exit");
+  };
+
+  const handleOrderFilterCloseButtonClick = () => {
+    orderFilterSection.classList.add("mobile-filter-exit");
+  };
+
+  const handleOrderFilterAnimationEnd = (event: AnimationEvent) => {
+    event.animationName === "mobile-filter-exit" &&
+      orderFilterSection.classList.remove("active");
+  };
+
+  orderFilterOpenButton.addEventListener(
+    "click",
+    handleOrderFilterOpenButtonClick
+  );
+
+  orderFilterCloseButton.addEventListener(
+    "click",
+    handleOrderFilterCloseButtonClick
+  );
+
+  orderFilterSection.addEventListener(
+    "animationend",
+    handleOrderFilterAnimationEnd
+  );
+};
+
+const handleMobileMainFilter = () => {
+  const mainFilterSection = document.querySelector(".main-filter");
+  const mainFilterOpenButton = document.querySelector(
+    ".mobile-button-main-filter"
+  );
+  const mainFilterCloseButton = document.querySelector(
+    ".main-filter-close-button"
+  );
+
+  handleMobileMainFilterDropdown();
+  handleMobileFiltering();
+
+  const handleMainFilterOpenButtonClick = () => {
+    mainFilterSection.classList.add("active");
+    mainFilterSection.classList.remove("mobile-filter-exit");
+  };
+
+  const handleMainFilterCloseButtonClick = () => {
+    mainFilterSection.classList.add("mobile-filter-exit");
+  };
+
+  const handleMainFilterAnimationEnd = (event: AnimationEvent) => {
+    event.animationName === "mobile-filter-exit" &&
+      mainFilterSection.classList.remove("active");
+  };
+
+  mainFilterOpenButton.addEventListener(
+    "click",
+    handleMainFilterOpenButtonClick
+  );
+
+  mainFilterCloseButton.addEventListener(
+    "click",
+    handleMainFilterCloseButtonClick
+  );
+
+  mainFilterSection.addEventListener(
+    "animationend",
+    handleMainFilterAnimationEnd
+  );
+};
+
+const handleMobileMainFilterDropdown = () => {
+  const dropdownToggleButton = document.querySelectorAll(
+    ".main-filter-content-submenu"
+  );
+  const mobileColorsFilterSection = document.querySelector(
+    ".mobile-colors-filter"
+  );
+  const mobileSizesFilterSection = document.querySelector(
+    ".mobile-sizes-filter"
+  );
+  const mobilePricesFilterSection = document.querySelector(
+    ".mobile-prices-filter"
+  );
+
+  const handleDropdownToggleButtonClick = (index: number) => {
+    const sections = [
+      mobileColorsFilterSection,
+      mobileSizesFilterSection,
+      mobilePricesFilterSection,
+    ];
+
+    const section = sections[index];
+    if (section) {
+      section.classList.toggle("hidden");
+      section.classList.toggle("active");
+    }
+
+    const isAnySectionActive = sections.some((section) =>
+      section.classList.contains("active")
+    );
+
+    const mobileFilterButtonsWrapper = document.querySelector(
+      ".mobile-filter-buttons-wrapper"
+    );
+    if (mobileFilterButtonsWrapper) {
+      if (isAnySectionActive) {
+        mobileFilterButtonsWrapper.classList.add("active");
+      } else {
+        mobileFilterButtonsWrapper.classList.remove("active");
+      }
+    }
+  };
+  dropdownToggleButton.forEach((button, index) => {
+    button.addEventListener("click", () =>
+      handleDropdownToggleButtonClick(index)
+    );
+  });
+};
+
+const handleMobileFiltering = () => {
+  const applyFilterButton = document.querySelector(
+    ".mobile-filter-apply-button"
+  );
+  const clearFilterButton = document.querySelector(
+    ".mobile-filter-buttons-wrapper button:not(.mobile-filter-apply-button)"
+  );
+  const mainFilterSection = document.querySelector(".main-filter");
+
+  const handleClearFilterButtonClick = () => {
+    const mobileCheckboxes = document.querySelectorAll<HTMLInputElement>(
+      ".mobile-filter-content input[type=checkbox]:checked"
+    );
+
+    mobileCheckboxes.forEach((checkbox) => {
+      checkbox.checked = false;
+    });
+  };
+
+  const handleApplyFilterButtonClick = async () => {
+    const contentUl = document.querySelector(".content") as HTMLElement;
+
+    removeNoProductsFoundMessage();
+    currentPage = 1;
+
+    const activeFilters = Array.from(
+      document.querySelectorAll<HTMLInputElement>(
+        ".mobile-filter-content input[type=checkbox]:checked"
+      )
+    ).map((checkbox) => checkbox.id);
+
+    if (activeFilters.length === 0) {
+      contentUl.innerHTML = "";
+      await fetchProducts(currentPage);
+    } else await fetchFilteredProducts(currentPage, activeFilters);
+
+    adjustLoadMoreButtonVisibility();
+    mainFilterSection.classList.add("mobile-filter-exit");
+  };
+
+  applyFilterButton.addEventListener("click", handleApplyFilterButtonClick);
+  clearFilterButton.addEventListener("click", handleClearFilterButtonClick);
 };

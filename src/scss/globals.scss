@@ -9,6 +9,13 @@
   --primary-shadow: 1px 1px 4px 0px rgba(0, 0, 0, 0.25);
 }
 
+body {
+  display: flex;
+  flex-direction: column;
+  max-width: 100%;
+  min-height: 100vh;
+}
+
 img {
   display: block;
   max-width: 100%;
