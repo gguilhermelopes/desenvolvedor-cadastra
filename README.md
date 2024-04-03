@@ -34,6 +34,12 @@ Execute os seguintes comandos a partir da pasta raiz do projeto:
 git clone https://github.com/gguilhermelopes/desenvolvedor-cadastra
 ```
 
+### Acesse a pasta do projeto
+
+```bash
+cd desenvolvedor-cadastra
+```
+
 ### Instale as dependências
 
 ```bash
@@ -49,5 +55,3 @@ npm run start:gp
 ### Endereços
 
 O frontend do projeto irá rodar na porta 3000 do seu localhost (http://localhost:3000), já para acessar o json-server, va até http://localhost:5000/products
-
-[⬆ Voltar ao topo](#título)
