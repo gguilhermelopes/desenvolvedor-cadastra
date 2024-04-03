@@ -15,6 +15,7 @@ Projeto feito sem uso de frameworks ou bibliotecas de CSS. As funções básicas
 - Adicionar e remover produto do carrinho de compras (salvar e carregar estado do carrinho no localStorage)
 - Carregar mais produtos
 - Responsividade para todos os tamanhos de tela
+- Otimização de imagens para build com Gulp e Imagemin
 
 ## Pré-requisitos
 
