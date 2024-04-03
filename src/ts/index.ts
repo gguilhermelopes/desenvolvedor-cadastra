@@ -23,7 +23,8 @@ const createButton = (text: string, className: string) => {
 
 const loadMoreButton = createButton("Carregar Mais", "load-more-button");
 const fallbackMessageText = "Não existem mais produtos.";
-const noProductsText = "Nenhum produto encontrado para os filtros.";
+const noProductsText =
+  "Nenhum produto encontrado para os filtros selecionados.";
 
 contentSection.appendChild(loadMoreButton);
 
@@ -335,7 +336,7 @@ const handleColorExpand = () => {
 
 const filterProducts = (products: Product[], activeCheckboxes: string[]) => {
   return products.filter((product) => {
-    return activeCheckboxes.some((checkbox) => {
+    return activeCheckboxes.every((checkbox) => {
       const filter = checkbox.replace(/-mobile$/, "");
       if (filter.startsWith("color-")) {
         return product.color.toLowerCase() === filter.slice(6);
@@ -354,6 +355,7 @@ const handleProductFilters = () => {
   const filterCheckboxes = document.querySelectorAll<HTMLInputElement>(
     ".filters-wrapper input[type=checkbox]"
   );
+  const contentUl = document.querySelector(".content") as HTMLElement;
 
   const handleFilterCheckboxesChange = async () => {
     removeNoProductsFoundMessage();
@@ -361,6 +363,8 @@ const handleProductFilters = () => {
     const areFiltersUnchecked = Array.from(filterCheckboxes).every(
       (checkbox) => !checkbox.checked
     );
+
+    contentUl.innerHTML = "";
 
     if (!areFiltersUnchecked) {
       const activeFilters = Array.from(filterCheckboxes)
@@ -371,7 +375,11 @@ const handleProductFilters = () => {
         activeFilters,
         lastSelectedOrder
       );
-      await renderProducts(currentPage, filteredProducts);
+      if (filteredProducts.length === 0) {
+        showNoProductsFoundMessage();
+      } else {
+        await renderProducts(currentPage, filteredProducts);
+      }
     } else {
       if (lastSelectedOrder) {
         const response = await fetch(`${serverUrl}/products`);
