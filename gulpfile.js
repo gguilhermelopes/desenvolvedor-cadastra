@@ -7,6 +7,7 @@ const autoprefixer = require("gulp-autoprefixer");
 const sass = require("gulp-sass")(require("sass"));
 const sourcemaps = require("gulp-sourcemaps");
 const browserSync = require("browser-sync").create();
+const imagemin = require("gulp-imagemin");
 
 const webpackConfig = require("./webpack.config.js");
 
@@ -87,7 +88,22 @@ function img() {
   return src(paths.img.src).pipe(dest(paths.dest + "/img"));
 }
 
-const build = series(clean, parallel(styles, scripts, html, img));
+function optimizeImages() {
+  return src(paths.img.src)
+    .pipe(
+      imagemin({
+        interlaced: true,
+        progressive: true,
+        optimizationLevel: 2, // Nível de otimização (0 a 7)
+      })
+    )
+    .pipe(dest(paths.dest + "/img"));
+}
+
+const build = series(
+  clean,
+  parallel(styles, scripts, html, img, optimizeImages)
+);
 const dev = () => {
   watch(paths.scripts.watch, { ignoreInitial: false }, scripts).on(
     "change",
