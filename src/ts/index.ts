@@ -456,6 +456,44 @@ const handleMobileOrderFilter = () => {
       orderFilterSection.classList.remove("active");
   };
 
+  const handleOrderFilterButtonClick = async (event: MouseEvent) => {
+    const filterCheckboxes = document.querySelectorAll<HTMLInputElement>(
+      ".mobile-filter-content input[type=checkbox]:checked"
+    );
+    const areFiltersUnchecked = Array.from(filterCheckboxes).every(
+      (checkbox) => !checkbox.checked
+    );
+    const target = event.target as HTMLElement;
+    const orderOption = target.textContent;
+
+    if (contentSection.contains(loadMoreButton)) {
+      contentSection.removeChild(loadMoreButton);
+    }
+    let productsToShow: Product[] | [] = [];
+
+    if (areFiltersUnchecked) {
+      const response = await fetch(`${serverUrl}/products`);
+      productsToShow = (await response.json()) as Product[];
+    } else {
+      const activeFilters = Array.from(filterCheckboxes).map(
+        (checkbox) => checkbox.id
+      );
+      productsToShow = await fetchAndFilterProducts(currentPage, activeFilters);
+    }
+    const sortedProducts = sortProducts(orderOption, productsToShow);
+
+    const contentUl = document.querySelector(".content") as HTMLElement;
+
+    contentUl.innerHTML = "";
+    contentUl.innerHTML = sortedProducts.map(createProductListItem).join("");
+
+    loadCartFromLocalStorage();
+    cartControl(sortedProducts);
+
+    const orderFilterSection = document.querySelector(".order-filter");
+    orderFilterSection.classList.add("mobile-filter-exit");
+  };
+
   orderFilterOpenButton.addEventListener(
     "click",
     handleOrderFilterOpenButtonClick
@@ -470,6 +508,12 @@ const handleMobileOrderFilter = () => {
     "animationend",
     handleOrderFilterAnimationEnd
   );
+  const orderFilterButtons = document.querySelectorAll(
+    ".mobile-filter-content li"
+  );
+  orderFilterButtons.forEach((button) => {
+    button.addEventListener("click", handleOrderFilterButtonClick);
+  });
 };
 
 const handleMobileMainFilter = () => {
@@ -641,6 +685,7 @@ const handleOrderFilter = async () => {
   const orderFilterButtons = document.querySelectorAll(
     ".order-filter-buttons-wrapper span"
   );
+
   let productsToShow: Product[] | [] = [];
 
   orderFilterButtons.forEach((button) => {
